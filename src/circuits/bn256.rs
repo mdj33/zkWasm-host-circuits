@@ -23,6 +23,7 @@ use halo2ecc_s::circuit::{
     pairing_chip::PairingChipOps,
     ecc_chip::EccChipBaseOps,
 };
+
 use halo2ecc_s::assign::{
     AssignedPoint,
     AssignedG2Affine,
@@ -41,7 +42,11 @@ use halo2ecc_s::{
         base_chip::{BaseChip, BaseChipConfig},
         range_chip::{RangeChip, RangeChipConfig},
     },
-    context::{Context, GeneralScalarEccContext, NativeScalarEccContext},
+    context::{
+        Context,
+        NativeScalarEccContext,
+        IntegerContext
+    },
 };
 
 use num_bigint::BigUint;
@@ -107,7 +112,7 @@ fn get_g1_from_cells(
     AssignedPoint::new(
         x,
         y,
-        AssignedCondition(ctx.native_ctx.borrow_mut().assign(
+        AssignedCondition(ctx.0.ctx.borrow_mut().assign(
             if is_identity { Fr::one() } else { Fr::zero() }
         ))
     )
@@ -129,7 +134,7 @@ fn get_g2_from_cells(
     AssignedG2Affine::new(
         (x1, x2),
         (y1, y2),
-        AssignedCondition(ctx.native_ctx.borrow_mut().assign(
+        AssignedCondition(ctx.0.ctx.borrow_mut().assign(
             if is_identity { Fr::one() } else { Fr::zero() }
         ))
     )
@@ -235,8 +240,10 @@ impl Bn256PairChip<Fr> {
         range_chip: &RangeChip<Fr>,
         layouter: &mut impl Layouter<Fr>,
     ) -> Result<(), Error> {
-        let contex = Rc::new(RefCell::new(Context::new()));
-        let mut ctx = NativeScalarEccContext<G1Affine>::<G1Affine, Fr>::new(contex);
+ 
+        let context = Rc::new(RefCell::new(Context::new()));
+        let ctx = IntegerContext::<halo2_proofs::pairing::bn256::Fq, Fr>::new(context);
+        let mut ctx = NativeScalarEccContext(ctx);
 
         let a_g1 = get_g1_from_cells(&mut ctx, a);
         let b_g2 = get_g2_from_cells(&mut ctx, b);
@@ -426,8 +433,9 @@ impl Bn256SumChip<Fr> {
         range_chip: &RangeChip<Fr>,
         layouter: &mut impl Layouter<Fr>,
     ) -> Result<(), Error> {
-        // let contex = Rc::new(RefCell::new(Context::new()));
-        let mut ctx = NativeScalarEccContext::fq12_add(&mut self, a, b)
+        let context = Rc::new(RefCell::new(Context::new()));
+        let ctx = IntegerContext::<halo2_proofs::pairing::bn256::Fq, Fr>::new(context);
+        let mut ctx = NativeScalarEccContext(ctx);
 
         let mut g1s:Vec<AssignedPoint<_, _>> = ls.chunks(9).map(|l| {
             get_g1_from_cells(&mut ctx, &l.to_vec())
@@ -439,7 +447,7 @@ impl Bn256SumChip<Fr> {
             ctx.to_point_with_curvature(p)
         });
         let sum_ret = sum_ret.to_point();
-        ctx.native_ctx.borrow_mut().enable_permute(&sum_ret.z.0);
+        ctx.0.ctx.borrow_mut().enable_permute(&sum_ret.z.0);
         let records = Arc::try_unwrap(Into::<Context<Fr>>::into(ctx).records).unwrap().into_inner().unwrap();
         layouter.assign_region(
             || "base",
