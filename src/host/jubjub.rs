@@ -270,9 +270,62 @@ mod tests {
         // println!("rhs x={},y={}",rhs.x,rhs.y);
         assert_eq!(lhs,rhs)
 
+    }
+
+    use ff_ce::PrimeFieldRepr;
+    #[test]
+    fn generate_test_mul() {
+        use num_bigint::BigInt;
+        let msg = b"Foo bar";
+
+        // pad with zeroes to match representation length
+        let mut msg_padded: Vec<u8> = msg.iter().cloned().collect();
+        msg_padded.resize(32, 0u8);
+        //
+        let c = fs::Fs::to_uniform_32(msg_padded.as_ref());
+        // let c = fs::Fs::from_str("2").unwrap();
+        let mut c_bytes = [0u8; 32];
+        c.into_repr().write_le(& mut c_bytes[..]).expect("get LE bytes of signature S");
+        let c_repr_bigint = BigInt::from_signed_bytes_le(&c_bytes);
+        println!("c {}",c_repr_bigint.to_str_radix(10));
 
 
+        let p_g = Point {
+            x: bn_to_field(&(BigUint::parse_bytes(b"2ef3f9b423a2c8c74e9803958f6c320e854a1c1c06cd5cc8fd221dc052d76df7", 16).unwrap())),
+            y: bn_to_field(&(BigUint::parse_bytes(b"05a01167ea785d3f784224644a68e4067532c815f5f6d57d984b5c0e9c6c94b7", 16).unwrap())),
+        };
+
+        let rhs = p_g.mul_scalar_fs(c);
+
+        //c=32195221423877958
+        //x=2b7caecadf67c405983ab5ba77e8e2f921158850fee4d0962751642010fdace4,y=15d6b5dca01dfbe7e549389628242504c60a0be8ae36dd4de1fbb5c461bc067e
+        //dec:x=19669747898413870458863629521161089277913689400039595142733762095585723002084,y=9877930256250505639648328887241932676754586687658209502285904431386979993214
+        println!("rhs x={},y={}",rhs.x,rhs.y);
 
     }
+
+    #[test]
+    fn generate_test_add() {
+
+        let vk = Point {
+            x: bn_to_field(&(BigUint::parse_bytes(b"01fc44267c07b1ebf40c09633c0e7cd3eb21749b315d960f1ff88cca4a95b90c", 16).unwrap())),
+            y: bn_to_field(&(BigUint::parse_bytes(b"0f5e2196329baa2d5bbeaf2e644b8eabef581ab5b34711ee381a2a50b0259c1c", 16).unwrap())),
+        };
+        // let sig_r = Point {
+        //     x: bn_to_field(&(BigUint::parse_bytes(b"2ef3f9b423a2c8c74e9803958f6c320e854a1c1c06cd5cc8fd221dc052d76df7", 16).unwrap())),
+        //     y: bn_to_field(&(BigUint::parse_bytes(b"05a01167ea785d3f784224644a68e4067532c815f5f6d57d984b5c0e9c6c94b7", 16).unwrap())),
+        // };
+        let sig_r = Point {
+            x: bn_to_field(&(BigUint::parse_bytes(b"2ef3f9b423a2c8c74e9803958f6c320e854a1c1c06cd5cc8fd221dc052d76df7", 16).unwrap())),
+            y: bn_to_field(&(BigUint::parse_bytes(b"05a01167ea785d3f784224644a68e4067532c815f5f6d57d984b5c0e9c6c94b7", 16).unwrap())),
+        };
+        //rhs x=24a751121f7d0d785935d55306ebfe453ad55fe3435201ab95615bdb829f0316,y=08ee66c2e788d6f56d9457aff9101426b9ad86bb39e8353d719cc02fe7fc9a53
+        //dec:x=16578885538864834913634152914207572829284688953553409301338692898630452314902,y=4039721622823844597861764938277547409353264496911078152703637653498156063315
+        let rhs = vk.add(&sig_r);
+
+        println!("rhs x={},y={}",rhs.x,rhs.y);
+
+    }
+
 
 }
