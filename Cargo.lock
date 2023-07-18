@@ -3525,7 +3525,7 @@ dependencies = [
  "mongodb",
  "num-bigint 0.4.3",
  "poseidon",
- "rand 0.8.5",
+ "rand 0.4.6",
  "ripemd",
  "serde",
  "serde_json",

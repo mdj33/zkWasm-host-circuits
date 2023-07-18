@@ -1,6 +1,7 @@
 use lazy_static::lazy_static;
 use crate::utils::bn_to_field;
 use halo2_proofs::pairing::bn256::Fr;
+use halo2_proofs::pairing::bn256::Bn256;
 use std::ops::{SubAssign, MulAssign, AddAssign};
 use ff::Field;
 use num_bigint::BigUint;
@@ -165,7 +166,7 @@ mod tests {
     use halo2_proofs::pairing::bn256::Fr;
     use halo2_proofs::pairing::group::Group;
     use num_bigint::BigUint;
-    use rand::rngs::OsRng;
+
     use std::fs::File;
     use std::ops::Add;
 
@@ -214,6 +215,7 @@ mod tests {
     }
     use ff_ce::PrimeField;
     use franklin_crypto::alt_babyjubjub::fs;
+    use franklin_crypto::eddsa::{PublicKey,PrivateKey};
     use franklin_crypto::jubjub::ToUniform;
     use crate::utils::bn_to_field;
     use std::str::FromStr;
@@ -270,6 +272,54 @@ mod tests {
         // println!("rhs x={},y={}",rhs.x,rhs.y);
         assert_eq!(lhs,rhs)
 
+    }
+    use rand::{ SeedableRng, thread_rng};
+    use rand::{Rng};
+    use franklin_crypto::bellman::pairing::bn256::Bn256;
+    use franklin_crypto::jubjub::FixedGenerators;
+    use franklin_crypto::alt_babyjubjub::AltJubjubBn256;
+
+
+    #[test]
+    pub fn verify_alt_jubjub() {
+        let rng = &mut thread_rng();
+        let sk = PrivateKey::<Bn256>(rng.gen());
+        let params = AltJubjubBn256::new();
+        let p_g = FixedGenerators::SpendingKeyGenerator;
+        let pk = PublicKey::from_private(&sk, p_g, &params);
+
+       // println!("vk={:?}",pk.0.into_xy().0);
+
+        let vk = Point {
+            x: bn_to_field(&(BigUint::parse_bytes(b"139f1d319d2a51a1938aef20ae4aa05b4bacef0c95ec2acf6d70b0430bed7808", 16).unwrap())),
+            y: bn_to_field(&(BigUint::parse_bytes(b"023abdc9dac65b2e858cf258c0a9b0c2c8a83a86ec2ebbaab8fdb5169b262597", 16).unwrap())),
+        };
+
+
+        // let fr_str = "1902101563350775171813864964289368622061698554691074493911860015574812994359";
+        // let fs_str = "1902101563350775171813864964289368622061698554691074493911860015574812994359";
+
+        // ;
+        let mut result = [0u8; 32];
+        let repr = pk.0.into_xy().0.into_repr();
+        repr.write_le(result.as_mut_slice()).unwrap();
+        let fr_s = BigUint::from_bytes_le(&result);
+        let fs_s = fs::Fs::to_uniform_32(&result);
+        // let fs_s = BigUint::from_str(fs_str).unwrap();
+        // println!("fr_s={},fs={:?}",fr_s.to_str_radix(16),fs_s.to_string());
+        let lhs = vk.mul_scalar(&fr_s);
+        let rhs = vk.mul_scalar_fs(fs_s);
+        // println!("lhs x={},y={}",lhs.x,lhs.y);
+        // println!("rhs x={},y={}",rhs.x,rhs.y);
+        assert_eq!(lhs,rhs)
+
+    }
+
+    #[test]
+    fn test_mul(){
+        for i in 0..50000{
+            verify_alt_jubjub()
+        }
     }
 
     use ff_ce::PrimeFieldRepr;

@@ -23,7 +23,7 @@ halo2aggregator-s = { git = "https://github.com/DelphinusLab/halo2aggregator-s.g
 halo2ecc-s = { git = "https://github.com/lanbones/halo2ecc-s.git", branch = "bisect-lookup" }
 num-bigint = { version = "0.4", features = ["rand"] }
 poseidon = { git = "https://github.com/lanbones/poseidon" }
-rand = "0.8"
+rand = "0.4"
 ark-std = { version = "0.3.0", features = ["print-trace"] }
 serde = { version = "1.0", features = ["serde_derive"] }
 serde_json = "1.0"

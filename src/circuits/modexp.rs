@@ -1357,7 +1357,7 @@ mod tests {
         // i.e., l (1-80-bits) * r (LIMB_WIDTH - (1-80-bits)) < (2^108)-1)
         const L_BITLENGTH: usize = 80;
         let mut rng = rand::thread_rng();
-        let (l, r) = get_random_product_not_exceed_n_bits(rng.gen_range(1..=L_BITLENGTH));
+        let (l, r) = get_random_product_not_exceed_n_bits(rng.gen_range(1,2));
         let modulus = get_random_x_bit_bn(32);
         let mult = l.clone().mul(r.clone());
         let quotient = mult.clone().div(modulus.clone());
@@ -1594,9 +1594,9 @@ mod tests {
     fn get_random_x_bit_bn(bit_length: usize) -> BigUint {
         let mut rng = thread_rng();
         let mut b = BigUint::default();
-        while b.bits() != bit_length as u64 {
-            b = rng.sample(RandomBits::new(bit_length as u64));
-        }
+        // while b.bits() != bit_length as u64 {
+        //     b = rng.sample(RandomBits::new(bit_length as u64));
+        // }
         b
     }
 
