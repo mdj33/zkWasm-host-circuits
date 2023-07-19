@@ -322,6 +322,27 @@ mod tests {
         }
     }
 
+    #[test]
+    pub fn verify_alt_jubjub_mul() {
+        let vk = Point {
+            x: bn_to_field(&(BigUint::parse_bytes(b"139f1d319d2a51a1938aef20ae4aa05b4bacef0c95ec2acf6d70b0430bed7808", 16).unwrap())),
+            y: bn_to_field(&(BigUint::parse_bytes(b"023abdc9dac65b2e858cf258c0a9b0c2c8a83a86ec2ebbaab8fdb5169b262597", 16).unwrap())),
+        };
+
+        let fr_str = "2736030358979909402780800718157159386076813972158567259200215660948447373041";
+        let fs_str = "0";
+
+        let fr_s = BigUint::from_str(&fr_str).unwrap();
+        let fs_s = BigUint::from_str(&fs_str).unwrap();
+        // println!("fr_s={},fs={:?}",fr_s.to_str_radix(16),fs_s.to_string());
+        let lhs = vk.mul_scalar(&fr_s);
+        let rhs = vk.mul_scalar(&fs_s);
+        // println!("lhs x={},y={}",lhs.x,lhs.y);
+        // println!("rhs x={},y={}",rhs.x,rhs.y);
+        assert_eq!(lhs,rhs)
+
+    }
+
     use ff_ce::PrimeFieldRepr;
     #[test]
     fn generate_test_mul() {
